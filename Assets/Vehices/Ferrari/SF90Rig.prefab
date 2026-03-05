@@ -477,6 +477,8 @@ MonoBehaviour:
   maxLookLeftRight: 60
   maxLookUp: 20
   maxLookDown: -15
+  returnDelay: 1.5
+  returnSpeed: 5
   baseFOV: 60
   maxFOV: 85
   topSpeed: 90

@@ -16,6 +16,12 @@ public class FirstPersonCamera : MonoBehaviour
     public float maxLookUp = 20f;
     public float maxLookDown = -15f;
 
+    [Header("Auto-Center Settings")]
+    [Tooltip("How many seconds to wait after letting go of RMB before auto-centering.")]
+    public float returnDelay = 1.5f;
+    [Tooltip("How fast the camera snaps back to the center.")]
+    public float returnSpeed = 5f;
+
     [Header("Speed Effects - Field of View")]
     public float baseFOV = 60f;
     public float maxFOV = 85f;
@@ -34,6 +40,7 @@ public class FirstPersonCamera : MonoBehaviour
     // Internal state variables
     private float mouseX, mouseY;
     private Vector3 originalLocalPosition;
+    private float timeSinceLastInput = 0f;
 
     void OnEnable()
     {
@@ -70,16 +77,37 @@ public class FirstPersonCamera : MonoBehaviour
 
     private void HandleHeadLook()
     {
-        // Gather mouse input via new Input System
-        Vector2 lookDelta = inputActions.Camera.Orbit.ReadValue<Vector2>();
-        mouseX += lookDelta.x * lookSensitivity;
-        mouseY -= lookDelta.y * lookSensitivity;
+        // Check if Right Mouse Button is currently held down
+        bool isRightClicking = Mouse.current != null && Mouse.current.rightButton.isPressed;
 
-        // Clamp the rotation to simulate the HANS device constraints
-        mouseX = Mathf.Clamp(mouseX, -maxLookLeftRight, maxLookLeftRight);
-        mouseY = Mathf.Clamp(mouseY, maxLookDown, maxLookUp);
+        if (isRightClicking)
+        {
+            // Reset our auto-center timer
+            timeSinceLastInput = 0f;
 
-        // Apply rotation
+            // Gather mouse input via new Input System
+            Vector2 lookDelta = inputActions.Camera.Orbit.ReadValue<Vector2>();
+            mouseX += lookDelta.x * lookSensitivity;
+            mouseY -= lookDelta.y * lookSensitivity;
+
+            // Clamp the rotation to simulate the HANS device constraints
+            mouseX = Mathf.Clamp(mouseX, -maxLookLeftRight, maxLookLeftRight);
+            mouseY = Mathf.Clamp(mouseY, maxLookDown, maxLookUp);
+        }
+        else
+        {
+            // The player is not holding right click. Start counting up the timer.
+            timeSinceLastInput += Time.deltaTime;
+
+            // Once the delay has passed, smoothly pull the camera back to center (0, 0)
+            if (timeSinceLastInput >= returnDelay)
+            {
+                mouseX = Mathf.Lerp(mouseX, 0f, Time.deltaTime * returnSpeed);
+                mouseY = Mathf.Lerp(mouseY, 0f, Time.deltaTime * returnSpeed);
+            }
+        }
+
+        // Apply rotation (this happens every frame, whether returning to center or looking around)
         transform.localRotation = Quaternion.Euler(mouseY, mouseX, 0f);
     }
 
