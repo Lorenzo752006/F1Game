@@ -18,4 +18,10 @@ public class SCC_Inputs {
     public float brakeInput;
     public float handbrakeInput;
 
+    // New: camera change request (pressed this frame)
+    public bool cameraChangePressed;
+
+    // New: camera orbit input (right stick / mouse delta)
+    public Vector2 cameraOrbit;
+
 }

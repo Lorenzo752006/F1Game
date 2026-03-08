@@ -77,7 +77,20 @@ public class SCC_Drivetrain : MonoBehaviour {
     public int direction = 1;       //  Direction. 1 = forward -1 = reverse.
     public float finalDriveRatio = 3.2f;        //  Final drive ratio.
 
-    public float highSpeedSteerAngle = 100f;        //  Vehicle will apply minimal steer angle at this speed.
+    public float highSpeedSteerAngle = 360f;        //  Vehicle will apply minimal steer angle at this speed (km/h). Should match your car's top speed.
+
+    [Header("Speed-Sensitive Steering")]
+    [Tooltip("Steering multiplier at standstill (0 km/h). 1.0 = full steeringAngle.")]
+    [Range(0.1f, 1f)]
+    public float lowSpeedSteerRatio = 0.9f;
+    [Tooltip("Steering multiplier at top speed (highSpeedSteerAngle km/h). Keep above 0.15 or you won't be able to turn.")]
+    [Range(0.05f, 0.5f)]
+    public float highSpeedSteerRatio = 0.28f;
+    [Tooltip("Maximum steering rack speed in degrees/sec. Limits how fast the wheels can physically turn.")]
+    public float maxSteerSpeed = 180f;
+    [Tooltip("At top speed the rack slows to this fraction of maxSteerSpeed.")]
+    [Range(0.3f, 1f)]
+    public float highSpeedRackRatio = 0.5f;
 
     private float timerForReverse = 0f;     //  Detecting reverse gear.
     private bool appliedBrake = false;
@@ -201,8 +214,19 @@ public class SCC_Drivetrain : MonoBehaviour {
         //  Getting all steerable wheels and set their steering angles related to player's input.
         for (int i = 0; i < wheels.Length; i++) {
 
-            if (wheels[i].isSteering)
-                wheels[i].wheelCollider.WheelCollider.steerAngle = (wheels[i].steeringAngle * InputProcessor.inputs.steerInput) * Mathf.Lerp(1f, .25f, speed / highSpeedSteerAngle);
+            if (wheels[i].isSteering) {
+                //  Smooth interpolation between low-speed and high-speed steering ratio
+                float speedFactor = Mathf.Clamp01(speed / highSpeedSteerAngle);
+                float steerRatio = Mathf.Lerp(lowSpeedSteerRatio, highSpeedSteerRatio, speedFactor);
+
+                //  Target angle based on input and speed-dependent ratio
+                float targetAngle = wheels[i].steeringAngle * InputProcessor.inputs.steerInput * steerRatio;
+
+                //  Steering rack speed reduces at high speed to prevent snap-steering
+                float rackSpeed = Mathf.Lerp(maxSteerSpeed, maxSteerSpeed * highSpeedRackRatio, speedFactor);
+                float currentAngle = wheels[i].wheelCollider.WheelCollider.steerAngle;
+                wheels[i].wheelCollider.WheelCollider.steerAngle = Mathf.MoveTowards(currentAngle, targetAngle, rackSpeed * Time.fixedDeltaTime);
+            }
             else
                 wheels[i].wheelCollider.WheelCollider.steerAngle = 0f;
 

@@ -90,6 +90,12 @@ public class F1CameraController : MonoBehaviour
             SwitchCamera();
         }
 
+        // Also listen for controller D-Pad down to switch cameras
+        if (Gamepad.current != null && Gamepad.current.dpad != null && Gamepad.current.dpad.down.wasPressedThisFrame)
+        {
+            SwitchCamera();
+        }
+
         HandleInput();
     }
 
@@ -129,15 +135,51 @@ public class F1CameraController : MonoBehaviour
     {
         bool isRightClicking = Mouse.current != null && Mouse.current.rightButton.isPressed;
 
+        // Read orbit input from global input manager (populated from right stick or mouse)
+        Vector2 orbit = Vector2.zero;
+        if (SCC_InputManager.Instance != null && SCC_InputManager.Instance.inputs != null)
+            orbit = SCC_InputManager.Instance.inputs.cameraOrbit;
+
         if (isRightClicking)
         {
             timeSinceLastInput = 0f;
-            Vector2 lookDelta = inputActions.Camera.Orbit.ReadValue<Vector2>();
+            Vector2 lookDelta = Vector2.zero;
+            try { lookDelta = inputActions.Camera.Orbit.ReadValue<Vector2>(); } catch { /* ignore */ }
+
+            // Fallback to SCC input manager orbit if action unavailable
+            if (lookDelta.sqrMagnitude <= 0.0001f) lookDelta = orbit;
 
             mouseX += lookDelta.x * lookSensitivity;
             mouseY -= lookDelta.y * lookSensitivity;
 
             // Clamp rotation for helmet/TCam
+            if (currentView != CameraView.ThirdPerson)
+            {
+                mouseX = Mathf.Clamp(mouseX, -maxLookLeftRight, maxLookLeftRight);
+                mouseY = Mathf.Clamp(mouseY, maxLookDown, maxLookUp);
+            }
+        }
+        else if (orbit.sqrMagnitude > 0.0001f)
+        {
+            // Determine whether orbit is mouse-delta-style (large values) or stick-style (-1..1)
+            bool isMouseDelta = Mathf.Abs(orbit.x) > 3f || Mathf.Abs(orbit.y) > 3f;
+
+            timeSinceLastInput = 0f;
+
+            if (isMouseDelta)
+            {
+                // Mouse delta provided through SCC_InputManager: apply instantly (no Time.deltaTime)
+                mouseX += orbit.x * lookSensitivity * 0.25f; // scale mouse sensitivity down a bit
+                mouseY -= orbit.y * lookSensitivity * 0.25f;
+            }
+            else
+            {
+                // Gamepad right stick: apply scaled per second
+                float stickScale = 120f; // degrees per second for full stick
+                mouseX += orbit.x * lookSensitivity * stickScale * Time.deltaTime;
+                mouseY -= orbit.y * lookSensitivity * stickScale * Time.deltaTime;
+            }
+
             if (currentView != CameraView.ThirdPerson)
             {
                 mouseX = Mathf.Clamp(mouseX, -maxLookLeftRight, maxLookLeftRight);

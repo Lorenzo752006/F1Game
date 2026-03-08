@@ -22,6 +22,10 @@ public class SCC_InputProcessor : MonoBehaviour {
     public bool smoothInputs = true;        //  Smoothly lerp the inputs?
     public float smoothingFactor = 5f;      //  Smoothing factor.
 
+    [Header("Steering Response")]
+    [Tooltip("Smoothing factor for steering only. Higher = more responsive. Set very high (e.g. 25) for near-instant response.")]
+    public float steerSmoothingFactor = 25f;
+
     private void Update() {
 
         //  Creating new inputs if doesn't exists yet.
@@ -34,7 +38,7 @@ public class SCC_InputProcessor : MonoBehaviour {
             if (smoothInputs) {
 
                 inputs.throttleInput = Mathf.MoveTowards(inputs.throttleInput, SCC_InputManager.Instance.inputs.throttleInput, Time.deltaTime * smoothingFactor);
-                inputs.steerInput = Mathf.MoveTowards(inputs.steerInput, SCC_InputManager.Instance.inputs.steerInput, Time.deltaTime * smoothingFactor);
+                inputs.steerInput = Mathf.MoveTowards(inputs.steerInput, SCC_InputManager.Instance.inputs.steerInput, Time.deltaTime * steerSmoothingFactor);
                 inputs.brakeInput = Mathf.MoveTowards(inputs.brakeInput, SCC_InputManager.Instance.inputs.brakeInput, Time.deltaTime * smoothingFactor);
                 inputs.handbrakeInput = Mathf.MoveTowards(inputs.handbrakeInput, SCC_InputManager.Instance.inputs.handbrakeInput, Time.deltaTime * smoothingFactor);
 
@@ -61,7 +65,7 @@ public class SCC_InputProcessor : MonoBehaviour {
         } else {
 
             inputs.throttleInput = Mathf.MoveTowards(inputs.throttleInput, newInputs.throttleInput, Time.deltaTime * smoothingFactor);
-            inputs.steerInput = Mathf.MoveTowards(inputs.steerInput, newInputs.steerInput, Time.deltaTime * smoothingFactor);
+            inputs.steerInput = Mathf.MoveTowards(inputs.steerInput, newInputs.steerInput, Time.deltaTime * steerSmoothingFactor);
             inputs.brakeInput = Mathf.MoveTowards(inputs.brakeInput, newInputs.brakeInput, Time.deltaTime * smoothingFactor);
             inputs.handbrakeInput = Mathf.MoveTowards(inputs.handbrakeInput, newInputs.handbrakeInput, Time.deltaTime * smoothingFactor);
 
