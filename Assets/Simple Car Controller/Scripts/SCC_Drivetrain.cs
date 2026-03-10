@@ -82,12 +82,12 @@ public class SCC_Drivetrain : MonoBehaviour {
     [Header("Speed-Sensitive Steering")]
     [Tooltip("Steering multiplier at standstill (0 km/h). 1.0 = full steeringAngle.")]
     [Range(0.1f, 1f)]
-    public float lowSpeedSteerRatio = 0.9f;
+    public float lowSpeedSteerRatio = 1f;
     [Tooltip("Steering multiplier at top speed (highSpeedSteerAngle km/h). Keep above 0.15 or you won't be able to turn.")]
     [Range(0.05f, 0.5f)]
-    public float highSpeedSteerRatio = 0.28f;
+    public float highSpeedSteerRatio = 0.75f;
     [Tooltip("Maximum steering rack speed in degrees/sec. Limits how fast the wheels can physically turn.")]
-    public float maxSteerSpeed = 180f;
+    public float maxSteerSpeed = 220f;
     [Tooltip("At top speed the rack slows to this fraction of maxSteerSpeed.")]
     [Range(0.3f, 1f)]
     public float highSpeedRackRatio = 0.5f;
